@@ -1,0 +1,10 @@
+node_modules/
+dist/
+.DS_Store
+*.log
+
+# Variáveis de ambiente com chaves Firebase — NUNCA commitar
+.env.local
+.env.production
+.env
+

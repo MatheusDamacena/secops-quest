@@ -1,0 +1,13 @@
+{
+  "name": "secops-quest",
+  "version": "1.0.0",
+  "description": "SecOps Quest — Duolingo-style Google SecOps learning game",
+  "scripts": {
+    "build": "node build.js",
+    "dev": "npx serve . -p 3000",
+    "preview": "npx serve dist -p 3000"
+  },
+  "devDependencies": {
+    "esbuild": "^0.24.0"
+  }
+}
