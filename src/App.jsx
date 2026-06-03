@@ -3297,7 +3297,17 @@ function LeaderboardScreen({ onBack, currentUserId, totalXp, streak }) {
   useEffect(() => {
     const load = async () => {
       try {
-        const res = await window.storage.list("lb:", true);
+        // Try Firebase Firestore first
+        if (typeof fbGetLeaderboard === 'function') {
+          const fbEntries = await fbGetLeaderboard();
+          if (fbEntries && fbEntries.length > 0) {
+            setEntries(fbEntries.sort((a,b) => (b.dx||0) - (a.dx||0)));
+            setLoading(false);
+            return;
+          }
+        }
+        // Fallback: window.storage (Claude artifact API)
+        const res = await window.storage?.list("lb:", true);
         const keys = res?.keys || [];
         const players = await Promise.all(
           keys.map(async k => {
