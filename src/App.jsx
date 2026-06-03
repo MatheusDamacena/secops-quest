@@ -3562,12 +3562,6 @@ export default function App() {
 
   if(!loaded) return null;
 
-  // 1. Onboarding (first time)
-  if(!onboarded) return (
-    <><style>{STYLE}</style>
-      <OnboardingScreen onDone={handleOnboardingDone} />
-    </>
-  );
 
   // 2. User setup (after onboarding, before home)
   // 1.5. Firebase Auth gate (only when Firebase is configured)
