@@ -123,18 +123,6 @@ secops-quest/
 ├── package.json         ← Dependências (só esbuild)
 ├── .gitignore
 └── README.md
-```
-
----
-
-## 🔑 Segredo do admin
-
-O código do admin é: **`secops2025`**
-
-Mude em `src/App.jsx` linha:
-```js
-.get('admin') === 'secops2025'
-```
 
 ---
 
