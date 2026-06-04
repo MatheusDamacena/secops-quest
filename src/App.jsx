@@ -3123,6 +3123,16 @@ function FirebaseAuthScreen({ onAuth }) {
     'auth/network-request-failed': 'Sem conexão. Tente novamente.',
   }[code] || 'Erro inesperado. Tente novamente.');
 
+  const handleForgot = async () => {
+    if (!email.trim()) { setError('Digite seu email acima.'); return; }
+    setLoading(true); setError('');
+    try {
+      await FB.auth.sendPasswordResetEmail(email.trim());
+      setError('✅ Email de recuperação enviado! Verifique sua caixa de entrada.');
+    } catch(e) { setError(errMsg(e.code)); }
+    setLoading(false);
+  };
+
   const handleEmail = async () => {
     if (!email.trim() || !pass.trim()) { setError('Preencha email e senha.'); return; }
     setLoading(true); setError('');
@@ -3215,6 +3225,15 @@ function FirebaseAuthScreen({ onAuth }) {
             {mode==='login' ? 'Não tem conta? Criar agora' : 'Já tem conta? Fazer login'}
           </button>
         </div>
+        {mode === 'login' && (
+          <div style={{ textAlign:'center', marginTop:8 }}>
+            <button onClick={handleForgot} disabled={loading}
+              style={{ background:'none', border:'none', fontFamily:F.mono, color:C.muted,
+                fontSize:11, cursor:'pointer', letterSpacing:1 }}>
+              Esqueci minha senha
+            </button>
+          </div>
+        )}
       </div>
     </div>
   );
