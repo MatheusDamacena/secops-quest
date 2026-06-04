@@ -3455,6 +3455,7 @@ export default function App() {
 
   // Firebase Auth listener + Load data
   const [fbUser, setFbUser] = useState(null);
+  const [showLoginScreen, setShowLoginScreen] = useState(false); // força tela de login após logout
 
   useEffect(()=>{
     // If Firebase is configured, listen to auth state
@@ -3542,6 +3543,7 @@ export default function App() {
     setUserProfile(null);
     setSetupDone(false);
     setScreen("home");
+    if (FB) setShowLoginScreen(true); // força FirebaseAuthScreen se Firebase ativo
   };
 
   const completeM0=()=>{setProgress(p=>({...p,m0:true}));setTotalXp(x=>x+100);};
@@ -3594,10 +3596,11 @@ export default function App() {
 
   // 2. User setup (after onboarding, before home)
   // 1.5. Firebase Auth gate (only when Firebase is configured)
-  if(FB && !fbUser && loaded) return (
+  if(loaded && (showLoginScreen || (FB && !fbUser))) return (
     <><style>{STYLE}</style>
       <FirebaseAuthScreen onAuth={async (user) => {
         setFbUser(user);
+        setShowLoginScreen(false); // limpa flag de logout
         try {
           const data = await fbLoad(user.uid);
           if (data) {
