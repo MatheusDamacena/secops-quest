@@ -3228,8 +3228,8 @@ function FirebaseAuthScreen({ onAuth }) {
         {mode === 'login' && (
           <div style={{ textAlign:'center', marginTop:8 }}>
             <button onClick={handleForgot} disabled={loading}
-              style={{ background:'none', border:'none', fontFamily:F.mono, color:C.muted,
-                fontSize:11, cursor:'pointer', letterSpacing:1 }}>
+              style={{ background:'none', border:'none', fontFamily:F.mono, color:'#888',
+                fontSize:12, cursor:'pointer', letterSpacing:1, textDecoration:'underline' }}>
               Esqueci minha senha
             </button>
           </div>
