@@ -58,8 +58,21 @@ async function fbGetLeaderboard() {
   if (!FB) return [];
   try {
     const snap = await FB.db.collection('leaderboard').limit(50).get();
-    return snap.docs
-      .map(d => ({ id: d.id, ...d.data() }))
+    const entries = snap.docs.map(d => ({ id: d.id, ...d.data() }));
+    // Filtrar entradas de usuarios que nao existem mais
+    const valid = await Promise.all(entries.map(async e => {
+      try {
+        const userSnap = await FB.db.doc(`users/${e.id}`).get();
+        if (!userSnap.exists) {
+          // Deletar entrada orfã do leaderboard
+          await FB.db.doc(`leaderboard/${e.id}`).delete();
+          return null;
+        }
+        return e;
+      } catch { return e; }
+    }));
+    return valid
+      .filter(Boolean)
       .sort((a, b) => (b.dx || 0) - (a.dx || 0));
   } catch(e) { console.warn('fbGetLeaderboard failed', e.message); return []; }
 }
