@@ -3595,7 +3595,7 @@ export default function App() {
 
   const STYLE = `@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Nunito:wght@700;800;900&display=swap');*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}body{background:#07080f;}@keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}`;
 
-  if(!loaded) return null;
+  if(!loaded || loadingUser) return (<><style>{STYLE}</style><div style={{minHeight:'100vh',background:'#0a0b0c',display:'flex',alignItems:'center',justifyContent:'center'}}><div style={{color:'#00c4cc',fontFamily:'monospace',fontSize:16}}>Carregando...</div></div></>);
 
 
   // 2. User setup (after onboarding, before home)
@@ -3619,7 +3619,6 @@ export default function App() {
     </>
   );
 
-  if(loadingUser) return (<><style>{STYLE}</style><div style={{minHeight:'100vh',background:'#0a0b0c',display:'flex',alignItems:'center',justifyContent:'center'}}><div style={{color:'#00c4cc',fontFamily:'monospace',fontSize:16}}>Carregando...</div></div></>);
   if(!setupDone) return (
     <><style>{STYLE}</style>
       <UserSetupScreen onDone={handleSetupDone} />
