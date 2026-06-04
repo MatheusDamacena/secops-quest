@@ -3562,10 +3562,29 @@ export default function App() {
     setScreen(`m${mod}`);
   };
 
-  const handleSetupDone = (profile) => {
+  const handleSetupDone = async (profile) => {
     setUserProfile(profile);
     setSetupDone(true);
+    setOnboarded(true);
     setScreen("home");
+    // Explicitly save profile to Firestore immediately (don't rely on useEffect timing)
+    if (FB && fbUser) {
+      try {
+        await fbSave(fbUser.uid, {
+          userProfile: profile,
+          progress, totalXp, streak, mode,
+          onboarded: true,
+          lastPlayed: new Date().toDateString()
+        });
+      } catch(e) { console.warn('handleSetupDone fbSave failed:', e.message); }
+    }
+    // Always save to localStorage as backup
+    try {
+      localStorage.setItem('secops-quest', JSON.stringify({
+        userProfile: profile, progress, totalXp, streak, mode,
+        onboarded: true, lastPlayed: new Date().toDateString()
+      }));
+    } catch(e) {}
   };
 
   const STYLE = `@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Nunito:wght@700;800;900&display=swap');*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;margin:0;padding:0;}body{background:#07080f;}@keyframes slideUp{from{transform:translateY(100%);opacity:0}to{transform:translateY(0);opacity:1}}`;
@@ -3579,8 +3598,16 @@ export default function App() {
     <><style>{STYLE}</style>
       <FirebaseAuthScreen onAuth={async (user) => {
         setFbUser(user);
-        const data = await fbLoad(user.uid);
-        if(data?.userProfile) { setUserProfile(data.userProfile); setSetupDone(true); }
+        try {
+          const data = await fbLoad(user.uid);
+          if (data) {
+            if(data.userProfile) { setUserProfile(data.userProfile); setSetupDone(true); }
+            if(data.progress)    setProgress(data.progress);
+            if(data.totalXp)     setTotalXp(data.totalXp);
+            if(data.streak)      setStreak(data.streak);
+            if(data.onboarded)   setOnboarded(true);
+          }
+        } catch(e) { console.warn('onAuth fbLoad failed:', e.message); }
       }} />
     </>
   );
