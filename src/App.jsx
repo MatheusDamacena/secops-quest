@@ -3505,7 +3505,7 @@ export default function App() {
 
   // Persist: localStorage + Firestore
   useEffect(()=>{
-    if(!loaded) return;
+    if(!loaded || !userProfile?.name) return;
     const data = { progress, totalXp, streak, mode, onboarded, userProfile,
       lastPlayed: new Date().toDateString() };
     // Always save locally (offline support)
