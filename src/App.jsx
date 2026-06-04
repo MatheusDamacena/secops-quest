@@ -3124,14 +3124,58 @@ function FirebaseAuthScreen({ onAuth }) {
   }[code] || 'Erro inesperado. Tente novamente.');
 
   const handleForgot = async () => {
-    if (!email.trim()) { setError('Digite seu email acima.'); return; }
+    if (!email.trim()) { setError('Digite seu email.'); return; }
     setLoading(true); setError('');
     try {
       await FB.auth.sendPasswordResetEmail(email.trim());
-      setError('✅ Email de recuperação enviado! Verifique sua caixa de entrada.');
+      setError('✅ Email enviado! Verifique sua caixa de entrada.');
     } catch(e) { setError(errMsg(e.code)); }
     setLoading(false);
   };
+
+  if (mode === 'forgot') return (
+    <div style={{ minHeight:'100dvh', background:C.bg, display:'flex', flexDirection:'column',
+      alignItems:'center', justifyContent:'center', padding:'32px 20px' }}>
+      <Logo size={72} />
+      <div style={{ fontFamily:F.display, color:C.text, fontSize:22, fontWeight:900, marginTop:16, marginBottom:8 }}>
+        Recuperar senha
+      </div>
+      <div style={{ fontFamily:F.mono, color:C.muted, fontSize:13, marginBottom:32, textAlign:'center' }}>
+        Digite seu email e enviaremos um link para redefinir sua senha.
+      </div>
+      <div style={{ width:'100%', maxWidth:400 }}>
+        <input value={email} onChange={e=>setEmail(e.target.value)}
+          placeholder="email@empresa.com" type="email"
+          style={{ width:'100%', background:C.surface, border:`1.5px solid ${C.border}`,
+            borderRadius:12, padding:'13px 16px', fontFamily:F.mono, fontSize:14,
+            color:C.text, outline:'none', marginBottom:16 }} />
+        {error && (
+          <div style={{ background: error.startsWith('✅') ? 'rgba(34,211,160,.12)' : 'rgba(255,77,77,.12)',
+            border: `1px solid ${error.startsWith('✅') ? 'rgba(34,211,160,.3)' : 'rgba(255,77,77,.3)'}`,
+            borderRadius:10, padding:'10px 14px', fontFamily:F.mono,
+            color: error.startsWith('✅') ? C.green : C.red,
+            fontSize:12, marginBottom:14, textAlign:'center' }}>
+            {error}
+          </div>
+        )}
+        <button onClick={handleForgot} disabled={loading || !email.trim()}
+          style={{ width:'100%', background:C.accent, border:'none',
+            borderBottom:'4px solid rgba(0,0,0,.4)', borderRadius:14, padding:'14px',
+            fontFamily:F.display, fontWeight:900, fontSize:16, color:'#fff',
+            cursor:(loading||!email.trim())?'not-allowed':'pointer',
+            opacity:(loading||!email.trim())?.5:1, marginBottom:16 }}>
+          {loading ? '...' : 'Enviar link de recuperação'}
+        </button>
+        <div style={{ textAlign:'center' }}>
+          <button onClick={()=>{ setMode('login'); setError(''); }}
+            style={{ background:'none', border:'none', fontFamily:F.mono, color:'#888',
+              fontSize:12, cursor:'pointer', letterSpacing:1 }}>
+            ← Voltar para o login
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 
   const handleEmail = async () => {
     if (!email.trim() || !pass.trim()) { setError('Preencha email e senha.'); return; }
@@ -3227,7 +3271,7 @@ function FirebaseAuthScreen({ onAuth }) {
         </div>
         {mode === 'login' && (
           <div style={{ textAlign:'center', marginTop:8 }}>
-            <button onClick={handleForgot} disabled={loading}
+            <button onClick={()=>{ setMode('forgot'); setError(''); }}
               style={{ background:'none', border:'none', fontFamily:F.mono, color:'#888',
                 fontSize:12, cursor:'pointer', letterSpacing:1, textDecoration:'underline' }}>
               Esqueci minha senha
