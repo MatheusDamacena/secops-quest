@@ -3468,15 +3468,17 @@ export default function App() {
           // Load from Firestore
           const remote = await fbLoad(user.uid);
           setLoadingUser(false);
-          if (remote) {
-            if(remote.progress)    setProgress(remote.progress);
-            if(remote.totalXp)     setTotalXp(remote.totalXp);
-            if(remote.onboarded)   setOnboarded(true);
-            if(remote.userProfile?.name) { setUserProfile(remote.userProfile); setSetupDone(true); }
+          // Usar Firestore se disponivel, senao fallback para localStorage
+          const src = remote || (() => { try { const r = localStorage.getItem('secops-quest'); return r ? JSON.parse(r) : null; } catch(e) { return null; } })();
+          if (src) {
+            if(src.progress)    setProgress(src.progress);
+            if(src.totalXp)     setTotalXp(src.totalXp);
+            if(src.onboarded)   setOnboarded(true);
+            if(src.userProfile?.name) { setUserProfile(src.userProfile); setSetupDone(true); }
             const today     = new Date().toDateString();
             const yesterday = new Date(Date.now()-86400000).toDateString();
-            if(remote.lastPlayed===today)          setStreak(remote.streak||1);
-            else if(remote.lastPlayed===yesterday) setStreak((remote.streak||0)+1);
+            if(src.lastPlayed===today)          setStreak(src.streak||1);
+            else if(src.lastPlayed===yesterday) setStreak((src.streak||0)+1);
             else setStreak(1);
           }
         }
