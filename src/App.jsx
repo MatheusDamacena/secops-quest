@@ -3539,7 +3539,18 @@ export default function App() {
             if(src.progress)    setProgress(src.progress);
             if(src.totalXp)     setTotalXp(src.totalXp);
             if(src.onboarded)   setOnboarded(true);
-            if(src.userProfile?.name) { setUserProfile(src.userProfile); setSetupDone(true); }
+            if(src.userProfile?.name) {
+              setUserProfile(src.userProfile);
+              setSetupDone(true);
+              // Salvar no leaderboard imediatamente ao logar
+              fbLeaderboard(user.uid, {
+                name: src.userProfile.name,
+                avatar: src.userProfile.avatar,
+                dx: src.totalXp || 0,
+                streak: src.streak || 1,
+                userId: src.userProfile.userId
+              });
+            }
             const today     = new Date().toDateString();
             const yesterday = new Date(Date.now()-86400000).toDateString();
             if(src.lastPlayed===today)          setStreak(src.streak||1);
