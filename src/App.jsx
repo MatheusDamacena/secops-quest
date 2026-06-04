@@ -3469,7 +3469,7 @@ export default function App() {
             if(remote.progress)    setProgress(remote.progress);
             if(remote.totalXp)     setTotalXp(remote.totalXp);
             if(remote.onboarded)   setOnboarded(true);
-            if(remote.userProfile) { setUserProfile(remote.userProfile); setSetupDone(true); }
+            if(remote.userProfile?.name) { setUserProfile(remote.userProfile); setSetupDone(true); }
             const today     = new Date().toDateString();
             const yesterday = new Date(Date.now()-86400000).toDateString();
             if(remote.lastPlayed===today)          setStreak(remote.streak||1);
@@ -3508,7 +3508,7 @@ export default function App() {
     // Always save locally (offline support)
     try { localStorage.setItem('secops-quest', JSON.stringify(data)); } catch(e){}
     // Also save to Firestore if Firebase is configured and user is logged in
-    if (FB && fbUser) {
+    if (FB && fbUser && userProfile?.name) {
       fbSave(fbUser.uid, data);
     }
   },[progress,totalXp,streak,mode,loaded,onboarded,userProfile,fbUser]);
@@ -3570,9 +3570,10 @@ export default function App() {
     setOnboarded(true);
     setScreen("home");
     // Explicitly save profile to Firestore immediately (don't rely on useEffect timing)
-    if (FB && fbUser) {
+    const _cu = FB?.auth?.currentUser;
+    if (FB && _cu) {
       try {
-        await fbSave(fbUser.uid, {
+        await fbSave(_cu.uid, {
           userProfile: profile,
           progress, totalXp, streak, mode,
           onboarded: true,
