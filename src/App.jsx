@@ -47,9 +47,10 @@ async function fbLeaderboard(userId, entry) {
   if (!FB) return;
   try {
     await FB.db.doc(`leaderboard/${userId}`).set({
-      ...entry, updatedAt: firebase.firestore.FieldValue.serverTimestamp()
+      ...entry, updatedAt: Date.now()
     }, { merge: true });
-  } catch(e) { console.warn('fbLeaderboard failed', e.message); }
+    console.log('[leaderboard] saved ok for', userId);
+  } catch(e) { console.warn('fbLeaderboard failed', e.message, e.code); }
 }
 
 // Fetch leaderboard top 50
@@ -3584,7 +3585,7 @@ export default function App() {
 
   // Sync DX to leaderboard (Firestore + Artifact storage fallback)
   useEffect(()=>{
-    if(!loaded || !userProfile) return;
+    if(!loaded || !userProfile?.name || !fbUser) return;
     const entry = { ...userProfile, dx: totalXp, streak, lastSeen: Date.now() };
     // Firebase leaderboard
     if (FB && fbUser) {
