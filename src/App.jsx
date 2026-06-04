@@ -3375,34 +3375,13 @@ function LeaderboardScreen({ onBack, currentUserId, totalXp, streak }) {
 
   useEffect(() => {
     const load = async () => {
+      setLoading(true);
       try {
-        // Try Firebase Firestore first
         if (typeof fbGetLeaderboard === 'function') {
           const fbEntries = await fbGetLeaderboard();
-          if (fbEntries && fbEntries.length > 0) {
-            setEntries(fbEntries.sort((a,b) => (b.dx||0) - (a.dx||0)));
-            setLoading(false);
-            return;
-          }
+          setEntries((fbEntries||[]).sort((a,b) => (b.dx||0) - (a.dx||0)));
         }
-        // Fallback: window.storage (Claude artifact API)
-        const res = await window.storage?.list("lb:", true);
-        const keys = res?.keys || [];
-        const players = await Promise.all(
-          keys.map(async k => {
-            try {
-              const r = await window.storage.get(k, true);
-              return r ? JSON.parse(r.value) : null;
-            } catch { return null; }
-          })
-        );
-        const valid = players
-          .filter(Boolean)
-          .sort((a,b) => (b.dx||0) - (a.dx||0));
-        setEntries(valid);
-      } catch(e) {
-        setEntries([]);
-      }
+      } catch(e) { setEntries([]); }
       setLoading(false);
     };
     load();
@@ -3410,25 +3389,18 @@ function LeaderboardScreen({ onBack, currentUserId, totalXp, streak }) {
 
   const myRank = entries.findIndex(e => e.userId === currentUserId) + 1;
   const me = entries.find(e => e.userId === currentUserId);
+  const top3 = entries.slice(0, 3);
+  const rest = entries.slice(3);
+  const maxDx = entries[0]?.dx || 1;
 
-  const medalColor = (rank) => {
-    if (rank === 1) return "#FFD700";
-    if (rank === 2) return "#C0C0C0";
-    if (rank === 3) return "#CD7F32";
-    return C.textDim;
-  };
-
-  const medalEmoji = (rank) => {
-    if (rank === 1) return "🥇";
-    if (rank === 2) return "🥈";
-    if (rank === 3) return "🥉";
-    return `#${rank}`;
-  };
+  const podiumColor = (rank) => rank===1 ? '#FFD700' : rank===2 ? '#C0C0C0' : '#CD7F32';
+  const podiumH    = (rank) => rank===1 ? 90 : rank===2 ? 70 : 55;
+  const podiumOrder = [top3[1], top3[0], top3[2]]; // 2nd, 1st, 3rd
 
   return (
     <div style={{ minHeight:"100dvh", background:C.bg, display:"flex", flexDirection:"column" }}>
       {/* Header */}
-      <div style={{ background:C.surface, borderBottom:`1px solid ${C.border}`, padding:"16px 20px", display:"flex", alignItems:"center", gap:12 }}>
+      <div style={{ background:C.surface, borderBottom:`1px solid ${C.border}`, padding:"14px 20px", display:"flex", alignItems:"center", gap:12 }}>
         <button onClick={onBack} style={{ background:"none", border:"none", color:C.textDim, fontSize:29, cursor:"pointer", padding:"8px 10px", minWidth:44, minHeight:44 }}>‹</button>
         <div style={{ flex:1 }}>
           <div style={{ fontFamily:F.mono, color:C.textDim, fontSize:11, letterSpacing:2 }}>RANKING GLOBAL</div>
@@ -3436,80 +3408,123 @@ function LeaderboardScreen({ onBack, currentUserId, totalXp, streak }) {
         </div>
         <button onClick={() => { setEntries([]); setLoading(true); setRefresh(r => r+1); }}
           style={{ background:"none", border:`1px solid ${C.border}`, borderRadius:10,
-            color:C.textDim, fontSize:18, cursor:"pointer", padding:"8px 10px" }}>↺</button>
-        {myRank > 0 && (
-          <div style={{ background:C.purple+"22", border:`1px solid ${C.purple}44`, borderRadius:12, padding:"6px 12px", textAlign:"center" }}>
-            <div style={{ fontFamily:F.display, color:C.purple, fontSize:21, fontWeight:900 }}>#{myRank}</div>
-            <div style={{ fontFamily:F.mono, color:C.textDim, fontSize:11, letterSpacing:1 }}>SUA POS.</div>
-          </div>
-        )}
+            color:loading ? C.accent : C.textDim, fontSize:18, cursor:"pointer", padding:"8px 12px" }}>
+          {loading ? '⟳' : '↺'}
+        </button>
       </div>
 
-      {/* My card if not in top */}
-      {me && myRank > 10 && (
-        <div style={{ margin:"12px 18px 0", background:C.purple+"16", border:`2px solid ${C.purple}55`, borderBottom:`4px solid ${C.purple}`, borderRadius:16, padding:"14px 16px", display:"flex", alignItems:"center", gap:14 }}>
-          <div style={{ fontFamily:F.display, color:C.purple, fontSize:21, fontWeight:900, minWidth:36 }}>#{myRank}</div>
-          <div style={{ fontSize:30 }}>{me.avatar}</div>
-          <div style={{ flex:1 }}>
-            <div style={{ fontFamily:F.display, color:C.text, fontSize:16, fontWeight:800 }}>{me.name} <span style={{ color:C.purple, fontSize:14 }}>• você</span></div>
-            <div style={{ fontFamily:F.mono, color:C.textDim, fontSize:12 }}>⚡ {me.dx||0} DX · 🔥 {me.streak||0} dias</div>
-          </div>
-        </div>
-      )}
-
-      {/* List */}
-      <div style={{ flex:1, overflowY:"auto", padding:"12px max(16px, calc((100% - 568px) / 2)) 40px" }}>
+      <div style={{ flex:1, overflowY:"auto" }}>
         {loading ? (
-          <div style={{ textAlign:"center", padding:60 }}>
-            <div style={{ fontFamily:F.mono, color:C.textDim, fontSize:15 }}>Carregando ranking…</div>
+          <div style={{ textAlign:"center", padding:80 }}>
+            <div style={{ fontSize:40, marginBottom:16 }}>⟳</div>
+            <div style={{ fontFamily:F.mono, color:C.textDim, fontSize:14 }}>Carregando ranking…</div>
           </div>
         ) : entries.length === 0 ? (
-          <div style={{ textAlign:"center", padding:60 }}>
-            <div style={{ fontSize:48, marginBottom:12 }}>🏆</div>
-            <div style={{ fontFamily:F.display, color:C.text, fontSize:21, fontWeight:800, marginBottom:8 }}>Seja o primeiro!</div>
-            <div style={{ fontFamily:F.mono, color:C.textDim, fontSize:15 }}>Nenhum jogador ainda no ranking.</div>
+          <div style={{ textAlign:"center", padding:80 }}>
+            <div style={{ fontSize:56, marginBottom:16 }}>🏆</div>
+            <div style={{ fontFamily:F.display, color:C.text, fontSize:22, fontWeight:800, marginBottom:8 }}>Seja o primeiro!</div>
+            <div style={{ fontFamily:F.mono, color:C.textDim, fontSize:14 }}>Nenhum jogador ainda no ranking.</div>
           </div>
-        ) : (
-          entries.slice(0, 50).map((entry, idx) => {
-            const rank = idx + 1;
-            const isMe = entry.userId === currentUserId;
-            return (
-              <div key={entry.userId}
-                style={{ background: isMe ? C.purple+"16" : rank <= 3 ? medalColor(rank)+"12" : C.surface,
-                  border: `2px solid ${isMe ? C.purple+"66" : rank <= 3 ? medalColor(rank)+"55" : C.border}`,
-                  borderBottom: `4px solid ${isMe ? C.purple : rank <= 3 ? medalColor(rank) : C.cardDepth}`,
-                  borderRadius:16, padding:"14px 16px", marginBottom:10,
-                  display:"flex", alignItems:"center", gap:14, transition:"all .15s" }}>
-                {/* Rank */}
-                <div style={{ fontFamily:F.display, fontSize: rank <= 3 ? 24 : 17,
-                  fontWeight:900, color:medalColor(rank), minWidth:40, textAlign:"center" }}>
-                  {medalEmoji(rank)}
-                </div>
-                {/* Avatar */}
-                <div style={{ fontSize:28 }}>{entry.avatar}</div>
-                {/* Info */}
-                <div style={{ flex:1, minWidth:0 }}>
-                  <div style={{ fontFamily:F.display, color:C.text, fontSize:19, fontWeight:800 }}>
-                    {entry.name}
-                    {isMe && <span style={{ fontFamily:F.mono, color:C.purple, fontSize:11, marginLeft:8, background:C.purple+"22", borderRadius:8, padding:"2px 8px" }}>você</span>}
-                  </div>
-                  <div style={{ fontFamily:F.mono, color:C.textDim, fontSize:12, marginTop:2 }}>
-                    🔥 {entry.streak||0} dias · {entry.lastSeen ? new Date(entry.lastSeen).toLocaleDateString("pt-BR") : ""}
-                  </div>
-                </div>
-                {/* DX */}
-                <div style={{ textAlign:"right", flexShrink:0 }}>
-                  <div style={{ fontFamily:F.display, color: rank<=3 ? medalColor(rank) : C.amber, fontSize:22, fontWeight:900 }}>{(entry.dx||0).toLocaleString()}</div>
-                  <div style={{ fontFamily:F.mono, color:C.textDim, fontSize:11, letterSpacing:1 }}>DX</div>
-                </div>
+        ) : (<>
+
+          {/* PÓDIO top 3 */}
+          {top3.length >= 1 && (
+            <div style={{ background:`linear-gradient(180deg, #1a1060 0%, ${C.bg} 100%)`, padding:"32px 20px 0", marginBottom:8 }}>
+              <div style={{ display:"flex", alignItems:"flex-end", justifyContent:"center", gap:12, maxWidth:400, margin:"0 auto" }}>
+                {podiumOrder.map((entry, i) => {
+                  if (!entry) return <div key={i} style={{ flex:1 }}/>;
+                  const rank = entries.findIndex(e => e.userId === entry.userId) + 1;
+                  const isMe = entry.userId === currentUserId;
+                  const color = podiumColor(rank);
+                  const h = podiumH(rank);
+                  return (
+                    <div key={entry.userId} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:6 }}>
+                      {/* Crown for #1 */}
+                      {rank === 1 && <div style={{ fontSize:24 }}>👑</div>}
+                      {/* Avatar */}
+                      <div style={{ fontSize:rank===1?40:32, filter: isMe ? `drop-shadow(0 0 8px ${C.accent})` : 'none' }}>{entry.avatar}</div>
+                      {/* Name */}
+                      <div style={{ fontFamily:F.display, color: isMe ? C.accent : C.text, fontSize:12, fontWeight:800, textAlign:"center", maxWidth:80, overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis" }}>
+                        {entry.name}{isMe ? ' 👈' : ''}
+                      </div>
+                      {/* DX */}
+                      <div style={{ fontFamily:F.mono, color:color, fontSize:11, fontWeight:700 }}>⚡{entry.dx||0}</div>
+                      {/* Podium block */}
+                      <div style={{ width:"100%", height:h, background:`linear-gradient(180deg, ${color}cc, ${color}66)`,
+                        border:`2px solid ${color}`, borderBottom:"none", borderRadius:"8px 8px 0 0",
+                        display:"flex", alignItems:"center", justifyContent:"center",
+                        fontFamily:F.display, fontSize:rank===1?28:22, fontWeight:900, color }}>
+                        {rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉'}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-            );
-          })
-        )}
+            </div>
+          )}
+
+          {/* Minha posição fixada (se fora do top 10) */}
+          {me && myRank > 10 && (
+            <div style={{ margin:"8px 16px", background:C.accent+"18", border:`2px solid ${C.accent}55`,
+              borderLeft:`4px solid ${C.accent}`, borderRadius:14, padding:"12px 16px",
+              display:"flex", alignItems:"center", gap:12 }}>
+              <div style={{ fontFamily:F.display, color:C.accent, fontSize:18, fontWeight:900, minWidth:32 }}>#{myRank}</div>
+              <div style={{ fontSize:26 }}>{me.avatar}</div>
+              <div style={{ flex:1 }}>
+                <div style={{ fontFamily:F.display, color:C.text, fontSize:14, fontWeight:800 }}>{me.name} <span style={{ color:C.accent, fontSize:12 }}>• você</span></div>
+                <div style={{ fontFamily:F.mono, color:C.textDim, fontSize:11 }}>⚡ {me.dx||0} DX · 🔥 {me.streak||0} dias</div>
+              </div>
+              {/* Barra de progresso até próximo */}
+              {entries[myRank-2] && (
+                <div style={{ textAlign:"right" }}>
+                  <div style={{ fontFamily:F.mono, color:C.textDim, fontSize:10 }}>próximo</div>
+                  <div style={{ fontFamily:F.mono, color:C.accent, fontSize:11, fontWeight:700 }}>+{(entries[myRank-2].dx||0)-(me.dx||0)} DX</div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Lista #4 em diante */}
+          <div style={{ padding:"8px 16px 80px" }}>
+            {rest.map((entry, idx) => {
+              const rank = idx + 4;
+              const isMe = entry.userId === currentUserId;
+              const barW = Math.round(((entry.dx||0) / maxDx) * 100);
+              return (
+                <div key={entry.userId} style={{
+                  background: isMe ? C.accent+"14" : C.surface,
+                  border: `1.5px solid ${isMe ? C.accent+"66" : C.border}`,
+                  borderLeft: `4px solid ${isMe ? C.accent : C.border}`,
+                  borderRadius:12, padding:"10px 14px", marginBottom:8,
+                  display:"flex", alignItems:"center", gap:12 }}>
+                  <div style={{ fontFamily:F.display, color: isMe ? C.accent : C.textDim, fontSize:15, fontWeight:800, minWidth:28, textAlign:"center" }}>{rank}</div>
+                  <div style={{ fontSize:24 }}>{entry.avatar}</div>
+                  <div style={{ flex:1, minWidth:0 }}>
+                    <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:4 }}>
+                      <div style={{ fontFamily:F.display, color: isMe ? C.accent : C.text, fontSize:14, fontWeight:800, overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis" }}>
+                        {entry.name}{isMe ? ' 👈' : ''}
+                      </div>
+                    </div>
+                    {/* Barra de XP */}
+                    <div style={{ height:4, background:C.border, borderRadius:4, overflow:"hidden" }}>
+                      <div style={{ height:"100%", width:`${barW}%`, background: isMe ? C.accent : C.cyan, borderRadius:4, transition:"width .5s" }}/>
+                    </div>
+                  </div>
+                  <div style={{ textAlign:"right", flexShrink:0 }}>
+                    <div style={{ fontFamily:F.display, color: isMe ? C.accent : C.green, fontSize:14, fontWeight:800 }}>⚡{entry.dx||0}</div>
+                    <div style={{ fontFamily:F.mono, color:C.textDim, fontSize:10 }}>🔥{entry.streak||0}</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </>)}
       </div>
     </div>
   );
 }
+
+
 
 // ─── APP ROOT ─────────────────────────────────────────────────────────────────
 
