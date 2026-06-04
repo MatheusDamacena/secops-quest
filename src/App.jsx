@@ -3447,6 +3447,7 @@ function LeaderboardScreen({ onBack, currentUserId, totalXp, streak }) {
       )}
 
       <div style={{ flex:1, overflowY:"auto", padding:"8px 0 80px" }}>
+        <div style={{ maxWidth:640, margin:"0 auto", width:"100%" }}>
         {loading ? (
           <div style={{ textAlign:"center", padding:80 }}>
             <div style={{ fontSize:36, marginBottom:12 }}>⟳</div>
@@ -3488,52 +3489,54 @@ function LeaderboardScreen({ onBack, currentUserId, totalXp, streak }) {
                   )}
 
                   <div style={{
-                    margin:"0 12px 6px",
-                    background: isMe ? (zone ? zone+'22' : C.accent+'18') : zone ? zone+'0d' : C.surface,
-                    border: `1.5px solid ${isMe ? (zone||C.accent)+'88' : zone ? zone+'44' : C.border}`,
-                    borderRadius:14, padding:"12px 14px",
-                    display:"flex", alignItems:"center", gap:12,
-                    boxShadow: isMe ? `0 0 0 2px ${zone||C.accent}44` : 'none',
+                    margin:"0 16px 10px",
+                    background: isMe ? (zone ? zone+'18' : C.accent+'18') : C.surface,
+                    border: `2px solid ${isMe ? (zone||C.accent)+'88' : zone ? zone+'55' : C.border}`,
+                    borderBottom: `4px solid ${isMe ? (zone||C.accent) : zone ? zone+'88' : C.cardDepth}`,
+                    borderRadius:16, padding:"14px 16px",
+                    display:"flex", alignItems:"center", gap:14,
+                    transition:"all .12s",
                   }}>
                     {/* Rank */}
                     <div style={{ fontFamily:F.display, fontSize: rank<=3?22:16, fontWeight:900,
                       color: zone || (isMe ? C.accent : C.textDim),
-                      minWidth:32, textAlign:"center" }}>
+                      minWidth:36, textAlign:"center", flexShrink:0 }}>
                       {rankIcon(rank)}
                     </div>
 
                     {/* Avatar */}
-                    <div style={{ fontSize:28, lineHeight:1 }}>{entry.avatar}</div>
+                    <div style={{ fontSize:30, lineHeight:1, flexShrink:0 }}>{entry.avatar}</div>
 
                     {/* Info */}
                     <div style={{ flex:1, minWidth:0 }}>
-                      <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:5 }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:6 }}>
                         <div style={{ fontFamily:F.display, color: isMe ? (zone||C.accent) : C.text,
-                          fontSize:14, fontWeight:800,
+                          fontSize:15, fontWeight:800,
                           overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis" }}>
                           {entry.name}
                         </div>
                         {isMe && <div style={{ fontFamily:F.mono, fontSize:10, color: zone||C.accent,
-                          background:(zone||C.accent)+'22', borderRadius:6, padding:"1px 6px", flexShrink:0 }}>
+                          background:(zone||C.accent)+'22', borderRadius:6, padding:"2px 7px", flexShrink:0,
+                          letterSpacing:1 }}>
                           VOCÊ
                         </div>}
                       </div>
-                      {/* Barra XP */}
-                      <div style={{ height:5, background:C.border, borderRadius:99, overflow:"hidden" }}>
+                      {/* Barra DX */}
+                      <div style={{ height:6, background:C.border, borderRadius:99, overflow:"hidden" }}>
                         <div style={{ height:"100%", width:`${barW}%`,
-                          background: isMe ? (zone||C.accent) : zone||C.cyan,
+                          background: `linear-gradient(90deg, ${isMe ? (zone||C.accent) : zone||C.cyan}, ${isMe ? (zone||C.accent)+'aa' : zone+'aa'||C.cyan+'aa'})`,
                           borderRadius:99, transition:"width .6s ease" }}/>
                       </div>
                     </div>
 
-                    {/* XP + streak */}
+                    {/* DX + streak */}
                     <div style={{ textAlign:"right", flexShrink:0 }}>
-                      <div style={{ fontFamily:F.display, fontSize:15, fontWeight:900,
+                      <div style={{ fontFamily:F.display, fontSize:16, fontWeight:900,
                         color: zone || (isMe ? C.accent : C.text) }}>
-                        ⚡ {entry.dx||0}
+                        ⚡ {entry.dx||0} DX
                       </div>
-                      <div style={{ fontFamily:F.mono, fontSize:11, color:C.textDim }}>
-                        🔥 {entry.streak||0}
+                      <div style={{ fontFamily:F.mono, fontSize:11, color:C.textDim, marginTop:2 }}>
+                        🔥 {entry.streak||0} dias
                       </div>
                     </div>
                   </div>
@@ -3542,6 +3545,7 @@ function LeaderboardScreen({ onBack, currentUserId, totalXp, streak }) {
             })}
           </>
         )}
+        </div>
       </div>
     </div>
   );
