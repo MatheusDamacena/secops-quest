@@ -3452,6 +3452,7 @@ export default function App() {
   const [onboarded, setOnboarded] = useState(false);
   const [userProfile, setUserProfile] = useState(null); // { userId, name, avatar }
   const [setupDone, setSetupDone] = useState(false);
+  const [loadingUser, setLoadingUser] = useState(true);
 
   // Firebase Auth listener + Load data
   const [fbUser, setFbUser] = useState(null);
@@ -3462,9 +3463,11 @@ export default function App() {
     if (FB) {
       const unsub = FB.auth.onAuthStateChanged(async (user) => {
         setFbUser(user);
+        if (!user) { setLoadingUser(false); }
         if (user) {
           // Load from Firestore
           const remote = await fbLoad(user.uid);
+          setLoadingUser(false);
           if (remote) {
             if(remote.progress)    setProgress(remote.progress);
             if(remote.totalXp)     setTotalXp(remote.totalXp);
@@ -3616,6 +3619,7 @@ export default function App() {
     </>
   );
 
+  if(loadingUser) return (<><style>{STYLE}</style><div style={{minHeight:'100vh',background:'#0a0b0c',display:'flex',alignItems:'center',justifyContent:'center'}}><div style={{color:'#00c4cc',fontFamily:'monospace',fontSize:16}}>Carregando...</div></div></>);
   if(!setupDone) return (
     <><style>{STYLE}</style>
       <UserSetupScreen onDone={handleSetupDone} />
