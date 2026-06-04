@@ -3371,6 +3371,7 @@ function UserSetupScreen({ onDone }) {
 function LeaderboardScreen({ onBack, currentUserId, totalXp, streak }) {
   const [entries, setEntries] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [refresh, setRefresh] = useState(0);
 
   useEffect(() => {
     const load = async () => {
@@ -3405,7 +3406,7 @@ function LeaderboardScreen({ onBack, currentUserId, totalXp, streak }) {
       setLoading(false);
     };
     load();
-  }, []);
+  }, [refresh]);
 
   const myRank = entries.findIndex(e => e.userId === currentUserId) + 1;
   const me = entries.find(e => e.userId === currentUserId);
@@ -3433,7 +3434,7 @@ function LeaderboardScreen({ onBack, currentUserId, totalXp, streak }) {
           <div style={{ fontFamily:F.mono, color:C.textDim, fontSize:11, letterSpacing:2 }}>RANKING GLOBAL</div>
           <div style={{ fontFamily:F.display, color:C.text, fontSize:22, fontWeight:900 }}>🏆 Leaderboard</div>
         </div>
-        <button onClick={() => { setEntries([]); setLoading(true); }}
+        <button onClick={() => { setEntries([]); setLoading(true); setRefresh(r => r+1); }}
           style={{ background:"none", border:`1px solid ${C.border}`, borderRadius:10,
             color:C.textDim, fontSize:18, cursor:"pointer", padding:"8px 10px" }}>↺</button>
         {myRank > 0 && (
