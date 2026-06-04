@@ -3397,26 +3397,59 @@ function LeaderboardScreen({ onBack, currentUserId, totalXp, streak }) {
   const podiumH    = (rank) => rank===1 ? 90 : rank===2 ? 70 : 55;
   const podiumOrder = [top3[1], top3[0], top3[2]]; // 2nd, 1st, 3rd
 
+  // Zonas: top 3 promovem, bottom 3 rebaixam (se tiver gente suficiente)
+  const total = entries.length;
+  const promoteZone = 3;
+  const demoteZone  = total >= 7 ? 3 : 0;
+
+  const zoneColor = (rank) => {
+    if (rank <= promoteZone) return '#22d3a0'; // verde — promoção
+    if (demoteZone > 0 && rank > total - demoteZone) return '#ff4d4d'; // vermelho — rebaixamento
+    return null;
+  };
+
+  const rankIcon = (rank) => {
+    if (rank === 1) return '🥇';
+    if (rank === 2) return '🥈';
+    if (rank === 3) return '🥉';
+    return rank;
+  };
+
   return (
     <div style={{ minHeight:"100dvh", background:C.bg, display:"flex", flexDirection:"column" }}>
+
       {/* Header */}
       <div style={{ background:C.surface, borderBottom:`1px solid ${C.border}`, padding:"14px 20px", display:"flex", alignItems:"center", gap:12 }}>
         <button onClick={onBack} style={{ background:"none", border:"none", color:C.textDim, fontSize:29, cursor:"pointer", padding:"8px 10px", minWidth:44, minHeight:44 }}>‹</button>
         <div style={{ flex:1 }}>
           <div style={{ fontFamily:F.mono, color:C.textDim, fontSize:11, letterSpacing:2 }}>RANKING GLOBAL</div>
-          <div style={{ fontFamily:F.display, color:C.text, fontSize:22, fontWeight:900 }}>🏆 Leaderboard</div>
+          <div style={{ fontFamily:F.display, color:C.text, fontSize:20, fontWeight:900 }}>🏆 Leaderboard</div>
         </div>
         <button onClick={() => { setEntries([]); setLoading(true); setRefresh(r => r+1); }}
           style={{ background:"none", border:`1px solid ${C.border}`, borderRadius:10,
-            color:loading ? C.accent : C.textDim, fontSize:18, cursor:"pointer", padding:"8px 12px" }}>
+            color: loading ? C.accent : C.textDim, fontSize:18, cursor:"pointer", padding:"8px 12px" }}>
           {loading ? '⟳' : '↺'}
         </button>
       </div>
 
-      <div style={{ flex:1, overflowY:"auto" }}>
+      {/* Legenda das zonas */}
+      {!loading && entries.length >= 7 && (
+        <div style={{ display:"flex", gap:8, padding:"10px 16px 4px", justifyContent:"flex-end" }}>
+          <div style={{ display:"flex", alignItems:"center", gap:4, fontFamily:F.mono, fontSize:10, color:"#22d3a0" }}>
+            <div style={{ width:10, height:10, background:"#22d3a044", border:"1.5px solid #22d3a0", borderRadius:3 }}/>
+            PROMOÇÃO
+          </div>
+          <div style={{ display:"flex", alignItems:"center", gap:4, fontFamily:F.mono, fontSize:10, color:"#ff4d4d" }}>
+            <div style={{ width:10, height:10, background:"#ff4d4d44", border:"1.5px solid #ff4d4d", borderRadius:3 }}/>
+            REBAIXAMENTO
+          </div>
+        </div>
+      )}
+
+      <div style={{ flex:1, overflowY:"auto", padding:"8px 0 80px" }}>
         {loading ? (
           <div style={{ textAlign:"center", padding:80 }}>
-            <div style={{ fontSize:40, marginBottom:16 }}>⟳</div>
+            <div style={{ fontSize:36, marginBottom:12 }}>⟳</div>
             <div style={{ fontFamily:F.mono, color:C.textDim, fontSize:14 }}>Carregando ranking…</div>
           </div>
         ) : entries.length === 0 ? (
@@ -3425,100 +3458,90 @@ function LeaderboardScreen({ onBack, currentUserId, totalXp, streak }) {
             <div style={{ fontFamily:F.display, color:C.text, fontSize:22, fontWeight:800, marginBottom:8 }}>Seja o primeiro!</div>
             <div style={{ fontFamily:F.mono, color:C.textDim, fontSize:14 }}>Nenhum jogador ainda no ranking.</div>
           </div>
-        ) : (<>
-
-          {/* PÓDIO top 3 */}
-          {top3.length >= 1 && (
-            <div style={{ background:`linear-gradient(180deg, #1a1060 0%, ${C.bg} 100%)`, padding:"32px 20px 0", marginBottom:8 }}>
-              <div style={{ display:"flex", alignItems:"flex-end", justifyContent:"center", gap:12, maxWidth:400, margin:"0 auto" }}>
-                {podiumOrder.map((entry, i) => {
-                  if (!entry) return <div key={i} style={{ flex:1 }}/>;
-                  const rank = entries.findIndex(e => e.userId === entry.userId) + 1;
-                  const isMe = entry.userId === currentUserId;
-                  const color = podiumColor(rank);
-                  const h = podiumH(rank);
-                  return (
-                    <div key={entry.userId} style={{ flex:1, display:"flex", flexDirection:"column", alignItems:"center", gap:6 }}>
-                      {/* Crown for #1 */}
-                      {rank === 1 && <div style={{ fontSize:24 }}>👑</div>}
-                      {/* Avatar */}
-                      <div style={{ fontSize:rank===1?40:32, filter: isMe ? `drop-shadow(0 0 8px ${C.accent})` : 'none' }}>{entry.avatar}</div>
-                      {/* Name */}
-                      <div style={{ fontFamily:F.display, color: isMe ? C.accent : C.text, fontSize:12, fontWeight:800, textAlign:"center", maxWidth:80, overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis" }}>
-                        {entry.name}{isMe ? ' 👈' : ''}
-                      </div>
-                      {/* DX */}
-                      <div style={{ fontFamily:F.mono, color:color, fontSize:11, fontWeight:700 }}>⚡{entry.dx||0}</div>
-                      {/* Podium block */}
-                      <div style={{ width:"100%", height:h, background:`linear-gradient(180deg, ${color}cc, ${color}66)`,
-                        border:`2px solid ${color}`, borderBottom:"none", borderRadius:"8px 8px 0 0",
-                        display:"flex", alignItems:"center", justifyContent:"center",
-                        fontFamily:F.display, fontSize:rank===1?28:22, fontWeight:900, color }}>
-                        {rank === 1 ? '🥇' : rank === 2 ? '🥈' : '🥉'}
-                      </div>
-                    </div>
-                  );
-                })}
+        ) : (
+          <>
+            {/* Separador zona promoção */}
+            {entries.length >= 4 && (
+              <div style={{ display:"flex", alignItems:"center", gap:8, padding:"0 16px 6px" }}>
+                <div style={{ flex:1, height:1, background:"#22d3a044" }}/>
+                <div style={{ fontFamily:F.mono, fontSize:10, color:"#22d3a0", letterSpacing:1 }}>⬆ ZONA DE PROMOÇÃO</div>
+                <div style={{ flex:1, height:1, background:"#22d3a044" }}/>
               </div>
-            </div>
-          )}
+            )}
 
-          {/* Minha posição fixada (se fora do top 10) */}
-          {me && myRank > 10 && (
-            <div style={{ margin:"8px 16px", background:C.accent+"18", border:`2px solid ${C.accent}55`,
-              borderLeft:`4px solid ${C.accent}`, borderRadius:14, padding:"12px 16px",
-              display:"flex", alignItems:"center", gap:12 }}>
-              <div style={{ fontFamily:F.display, color:C.accent, fontSize:18, fontWeight:900, minWidth:32 }}>#{myRank}</div>
-              <div style={{ fontSize:26 }}>{me.avatar}</div>
-              <div style={{ flex:1 }}>
-                <div style={{ fontFamily:F.display, color:C.text, fontSize:14, fontWeight:800 }}>{me.name} <span style={{ color:C.accent, fontSize:12 }}>• você</span></div>
-                <div style={{ fontFamily:F.mono, color:C.textDim, fontSize:11 }}>⚡ {me.dx||0} DX · 🔥 {me.streak||0} dias</div>
-              </div>
-              {/* Barra de progresso até próximo */}
-              {entries[myRank-2] && (
-                <div style={{ textAlign:"right" }}>
-                  <div style={{ fontFamily:F.mono, color:C.textDim, fontSize:10 }}>próximo</div>
-                  <div style={{ fontFamily:F.mono, color:C.accent, fontSize:11, fontWeight:700 }}>+{(entries[myRank-2].dx||0)-(me.dx||0)} DX</div>
-                </div>
-              )}
-            </div>
-          )}
-
-          {/* Lista #4 em diante */}
-          <div style={{ padding:"8px 16px 80px" }}>
-            {rest.map((entry, idx) => {
-              const rank = idx + 4;
+            {entries.map((entry, idx) => {
+              const rank = idx + 1;
               const isMe = entry.userId === currentUserId;
-              const barW = Math.round(((entry.dx||0) / maxDx) * 100);
+              const zone = zoneColor(rank);
+              const barW = Math.max(4, Math.round(((entry.dx||0) / maxDx) * 100));
+              const showDemoteSep = demoteZone > 0 && rank === total - demoteZone + 1;
+
               return (
-                <div key={entry.userId} style={{
-                  background: isMe ? C.accent+"14" : C.surface,
-                  border: `1.5px solid ${isMe ? C.accent+"66" : C.border}`,
-                  borderLeft: `4px solid ${isMe ? C.accent : C.border}`,
-                  borderRadius:12, padding:"10px 14px", marginBottom:8,
-                  display:"flex", alignItems:"center", gap:12 }}>
-                  <div style={{ fontFamily:F.display, color: isMe ? C.accent : C.textDim, fontSize:15, fontWeight:800, minWidth:28, textAlign:"center" }}>{rank}</div>
-                  <div style={{ fontSize:24 }}>{entry.avatar}</div>
-                  <div style={{ flex:1, minWidth:0 }}>
-                    <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:4 }}>
-                      <div style={{ fontFamily:F.display, color: isMe ? C.accent : C.text, fontSize:14, fontWeight:800, overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis" }}>
-                        {entry.name}{isMe ? ' 👈' : ''}
+                <React.Fragment key={entry.userId}>
+                  {/* Separador zona rebaixamento */}
+                  {showDemoteSep && (
+                    <div style={{ display:"flex", alignItems:"center", gap:8, padding:"8px 16px 6px" }}>
+                      <div style={{ flex:1, height:1, background:"#ff4d4d44" }}/>
+                      <div style={{ fontFamily:F.mono, fontSize:10, color:"#ff4d4d", letterSpacing:1 }}>⬇ ZONA DE REBAIXAMENTO</div>
+                      <div style={{ flex:1, height:1, background:"#ff4d4d44" }}/>
+                    </div>
+                  )}
+
+                  <div style={{
+                    margin:"0 12px 6px",
+                    background: isMe ? (zone ? zone+'22' : C.accent+'18') : zone ? zone+'0d' : C.surface,
+                    border: `1.5px solid ${isMe ? (zone||C.accent)+'88' : zone ? zone+'44' : C.border}`,
+                    borderRadius:14, padding:"12px 14px",
+                    display:"flex", alignItems:"center", gap:12,
+                    boxShadow: isMe ? `0 0 0 2px ${zone||C.accent}44` : 'none',
+                  }}>
+                    {/* Rank */}
+                    <div style={{ fontFamily:F.display, fontSize: rank<=3?22:16, fontWeight:900,
+                      color: zone || (isMe ? C.accent : C.textDim),
+                      minWidth:32, textAlign:"center" }}>
+                      {rankIcon(rank)}
+                    </div>
+
+                    {/* Avatar */}
+                    <div style={{ fontSize:28, lineHeight:1 }}>{entry.avatar}</div>
+
+                    {/* Info */}
+                    <div style={{ flex:1, minWidth:0 }}>
+                      <div style={{ display:"flex", alignItems:"center", gap:6, marginBottom:5 }}>
+                        <div style={{ fontFamily:F.display, color: isMe ? (zone||C.accent) : C.text,
+                          fontSize:14, fontWeight:800,
+                          overflow:"hidden", whiteSpace:"nowrap", textOverflow:"ellipsis" }}>
+                          {entry.name}
+                        </div>
+                        {isMe && <div style={{ fontFamily:F.mono, fontSize:10, color: zone||C.accent,
+                          background:(zone||C.accent)+'22', borderRadius:6, padding:"1px 6px", flexShrink:0 }}>
+                          VOCÊ
+                        </div>}
+                      </div>
+                      {/* Barra XP */}
+                      <div style={{ height:5, background:C.border, borderRadius:99, overflow:"hidden" }}>
+                        <div style={{ height:"100%", width:`${barW}%`,
+                          background: isMe ? (zone||C.accent) : zone||C.cyan,
+                          borderRadius:99, transition:"width .6s ease" }}/>
                       </div>
                     </div>
-                    {/* Barra de XP */}
-                    <div style={{ height:4, background:C.border, borderRadius:4, overflow:"hidden" }}>
-                      <div style={{ height:"100%", width:`${barW}%`, background: isMe ? C.accent : C.cyan, borderRadius:4, transition:"width .5s" }}/>
+
+                    {/* XP + streak */}
+                    <div style={{ textAlign:"right", flexShrink:0 }}>
+                      <div style={{ fontFamily:F.display, fontSize:15, fontWeight:900,
+                        color: zone || (isMe ? C.accent : C.text) }}>
+                        ⚡ {entry.dx||0}
+                      </div>
+                      <div style={{ fontFamily:F.mono, fontSize:11, color:C.textDim }}>
+                        🔥 {entry.streak||0}
+                      </div>
                     </div>
                   </div>
-                  <div style={{ textAlign:"right", flexShrink:0 }}>
-                    <div style={{ fontFamily:F.display, color: isMe ? C.accent : C.green, fontSize:14, fontWeight:800 }}>⚡{entry.dx||0}</div>
-                    <div style={{ fontFamily:F.mono, color:C.textDim, fontSize:10 }}>🔥{entry.streak||0}</div>
-                  </div>
-                </div>
+                </React.Fragment>
               );
             })}
-          </div>
-        </>)}
+          </>
+        )}
       </div>
     </div>
   );
